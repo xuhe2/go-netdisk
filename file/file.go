@@ -1,63 +1,93 @@
 package file
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
+	"fmt"
 	"io"
-	"os"
+	"strconv"
+	"sync"
 )
 
 type File struct {
-	Name string `json:"file_name"`
-	Data []byte `json:"file_data"`
+	Name         string `json:"file_name"`
+	NumFileParts int    `json:"num_file_parts"`
+	FileParts    []*FilePart
 }
 
-func (f *File) Open(name string) error {
-	var err error
-	f.Data, err = os.ReadFile(name)
-	if err != nil {
-		return err
+// 打开文件, 同时切分大文件为file parts.
+func (f *File) Open(r io.Reader) error {
+	f.NumFileParts = 0
+	f.FileParts = make([]*FilePart, 0)
+
+	content := make([]byte, FilePartSize)
+	// read the file data
+	for {
+		n, err := r.Read(content)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+		// create a new file part
+		f.FileParts = append(f.FileParts, NewFilePart(f.Name+strconv.Itoa(f.NumFileParts), content[:n]))
+		f.NumFileParts++
 	}
-	f.Name = name
 	return nil
 }
 
 func (f *File) Encrypt(key []byte) error {
-	// use AES to encrypt the file data
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return err
+	wg := sync.WaitGroup{}
+	ok := true
+	for i := 0; i < f.NumFileParts; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if err := f.FileParts[i].Encrypt(key); err != nil {
+				ok = false
+			}
+		}(i)
 	}
-	// encrypt the file data
-	ciphertext := make([]byte, aes.BlockSize+len(f.Data))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return err
+	wg.Wait()
+	if !ok {
+		return fmt.Errorf("encrypt file failed")
 	}
-	// encrypt the file data
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], f.Data)
-	// set the encrypted data
-	f.Data = ciphertext
 	return nil
 }
 
 func (f *File) Decrypt(key []byte) error {
-	// use AES to decrypt the file data
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return err
+	wg := sync.WaitGroup{}
+	ok := true
+	for i := 0; i < f.NumFileParts; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if err := f.FileParts[i].Decrypt(key); err != nil {
+				ok = false
+			}
+		}(i)
 	}
-	// decrypt the file data
-	if len(f.Data) < aes.BlockSize {
-		return err
+	wg.Wait()
+	if !ok {
+		return fmt.Errorf("decrypt file failed")
 	}
-	iv := f.Data[:aes.BlockSize]
-	chipertext := f.Data[aes.BlockSize:]
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(chipertext, chipertext)
-	// set the decrypted data
-	f.Data = chipertext
+	return nil
+}
+
+func (f *File) Save() error {
+	wg := sync.WaitGroup{}
+	ok := true
+	for i := 0; i < f.NumFileParts; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if err := f.FileParts[i].Save(); err != nil {
+				ok = false
+			}
+		}(i)
+	}
+	wg.Wait()
+	if !ok {
+		return fmt.Errorf("save file failed")
+	}
 	return nil
 }
