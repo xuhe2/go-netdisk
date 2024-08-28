@@ -33,7 +33,7 @@ func (f *File) Open(r io.Reader) error {
 			break
 		}
 		// create a new file part
-		f.FileParts = append(f.FileParts, NewFilePart(f.Name+strconv.Itoa(f.NumFileParts), content[:n]))
+		f.FileParts = append(f.FileParts, NewFilePart(f.Name+strconv.Itoa(f.NumFileParts)+".part", content[:n]))
 		f.NumFileParts++
 	}
 	return nil

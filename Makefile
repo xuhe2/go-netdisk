@@ -15,6 +15,15 @@ run: $(BINARY_NAME)
 clean-bin:
 	rm -f bin/${BINARY_NAME}
 
+# clean the data
+# 删除所有在data文件夹下并且用.part/.info结尾的文件
+clean-data:
+	rm -f data/*.part
+	rm -f data/*.info
+
+# clean up the build artifacts and data
+clean: clean-bin clean-data
+
 # test the go code
 test:
 	@go test ./...
