@@ -29,22 +29,22 @@ func (fi *FileInfo) Unmarshal(content []byte) error {
 	return json.Unmarshal(content, fi)
 }
 
-func (fi *FileInfo) WriteTo(w io.Writer) error {
+func (fi *FileInfo) WriteTo(w io.Writer) (int64, error) {
 	// 二进制化之后写入
 	content, err := fi.Marshal()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	_, err = w.Write(content)
-	return err
+	return int64(len(content)), err
 }
 
-func (fi *FileInfo) ReadFrom(r io.Reader) error {
+func (fi *FileInfo) ReadFrom(r io.Reader) (int64, error) {
 	// 从二进制中读取
 	buf := make([]byte, 2048)
 	n, err := r.Read(buf)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return json.Unmarshal(buf[:n], fi)
+	return int64(n), fi.Unmarshal(buf[:n])
 }

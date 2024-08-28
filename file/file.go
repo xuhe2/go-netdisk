@@ -96,7 +96,7 @@ func (f *File) SaveInfo() error {
 	}
 	defer infoFile.Close()
 	// write the file info to the file
-	if err := info.WriteTo(infoFile); err != nil {
+	if _, err := info.WriteTo(infoFile); err != nil {
 		return err
 	}
 	return nil
