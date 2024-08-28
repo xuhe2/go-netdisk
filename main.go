@@ -27,6 +27,19 @@ func main() {
 		programSetting.Key = *key
 	}
 
+	// get operation
+	operation := os.Args[1]
+	switch operation {
+	case "push":
+		push()
+	case "pull":
+		log.Printf("pull")
+	default:
+		log.Fatalf("operation %s not support", operation)
+	}
+}
+
+func push() {
 	// get data file name
 	if len(os.Args) <= 1 {
 		log.Fatalf("please input data file name")
@@ -44,23 +57,14 @@ func main() {
 	dataFile := file.File{Name: dataFileName}
 	dataFile.Open(reader)
 
-	// get operation
-	operation := os.Args[1]
-	switch operation {
-	case "push":
-		push(&dataFile)
-	case "pull":
-		log.Printf("pull")
-	default:
-		log.Fatalf("operation %s not support", operation)
+	if err := dataFile.Encrypt([]byte(programSetting.Key)); err != nil {
+		log.Fatalf("encrypt file error: %v", err)
+	}
+	if err := dataFile.Save(); err != nil {
+		log.Fatalf("save file error: %v", err)
 	}
 }
 
-func push(file *file.File) {
-	if err := file.Encrypt([]byte(programSetting.Key)); err != nil {
-		log.Fatalf("encrypt file error: %v", err)
-	}
-	if err := file.Save(); err != nil {
-		log.Fatalf("save file error: %v", err)
-	}
+func pull() {
+
 }
