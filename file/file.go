@@ -3,13 +3,17 @@ package file
 import (
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"sync"
+
+	"github.com/xuhe2/go-netdisk/setting"
 )
 
 type File struct {
 	Name         string `json:"file_name"`
 	NumFileParts int    `json:"num_file_parts"`
+	Key          []byte `json:"key"`
 	FileParts    []*FilePart
 }
 
@@ -36,6 +40,9 @@ func (f *File) Open(r io.Reader) error {
 }
 
 func (f *File) Encrypt(key []byte) error {
+	// set the key
+	f.Key = key
+	// encrypt each file part
 	wg := sync.WaitGroup{}
 	ok := true
 	for i := 0; i < f.NumFileParts; i++ {
@@ -73,6 +80,28 @@ func (f *File) Decrypt(key []byte) error {
 	return nil
 }
 
+func (f *File) SaveInfo() error {
+	info := setting.FileInfo{
+		Key:          f.Key,
+		NumFileParts: f.NumFileParts,
+		FileParts:    make([]string, f.NumFileParts),
+	}
+	for i := 0; i < f.NumFileParts; i++ {
+		info.FileParts[i] = f.FileParts[i].Name
+	}
+	// create a file to store the file info
+	infoFile, err := os.Create(f.Name + ".info")
+	if err != nil {
+		return err
+	}
+	defer infoFile.Close()
+	// write the file info to the file
+	if err := info.WriteTo(infoFile); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (f *File) Save() error {
 	wg := sync.WaitGroup{}
 	ok := true
@@ -88,6 +117,11 @@ func (f *File) Save() error {
 	wg.Wait()
 	if !ok {
 		return fmt.Errorf("save file failed")
+	}
+	// create a file info json file to store the file parts info
+	// this file will be used when decrypting the file
+	if err := f.SaveInfo(); err != nil {
+		return err
 	}
 	return nil
 }
