@@ -3,8 +3,10 @@ package file
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/xuhe2/go-netdisk/setting"
@@ -36,6 +38,44 @@ func (f *File) Open(r io.Reader) error {
 		f.FileParts = append(f.FileParts, NewFilePart(f.Name+strconv.Itoa(f.NumFileParts)+".part", content[:n]))
 		f.NumFileParts++
 	}
+	return nil
+}
+
+// 从路径加载文件
+func (f *File) Load(path string) error {
+	// 去除末尾的`/`
+	if path[len(path)-1] == '/' {
+		path = path[:len(path)-1]
+	}
+	// 找到路径下面后缀是`.info`的所有文件
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return err
+	}
+	var infoFile *os.File
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		if strings.HasSuffix(file.Name(), ".info") {
+			// load the file info
+			infoFile, err = os.Open(path + "/" + file.Name())
+			if err != nil {
+				return err
+			}
+			defer infoFile.Close()
+			break
+		}
+	}
+	if infoFile == nil {
+		return fmt.Errorf("file info not found")
+	}
+	// load file info from infoFile
+	filePartsInfo := setting.FileInfo{}
+	if _, err := filePartsInfo.ReadFrom(infoFile); err != nil {
+		return err
+	}
+	log.Printf("file info: %+v", filePartsInfo)
 	return nil
 }
 

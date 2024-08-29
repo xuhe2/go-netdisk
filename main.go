@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/xuhe2/go-netdisk/file"
 	"github.com/xuhe2/go-netdisk/setting"
@@ -33,7 +34,7 @@ func main() {
 	case "push":
 		push()
 	case "pull":
-		log.Printf("pull")
+		pull()
 	default:
 		log.Fatalf("operation %s not support", operation)
 	}
@@ -66,5 +67,21 @@ func push() {
 }
 
 func pull() {
+	// get data file name
+	if len(os.Args) <= 1 {
+		log.Fatalf("please input data file name")
+	}
+	path := os.Args[len(os.Args)-1]
+	log.Printf("path: %s", path)
 
+	dataFile := file.File{}
+
+	// 如果是URL
+	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+	} else {
+		//如果是文件路径
+		if err := dataFile.Load(path); err != nil {
+			log.Fatalf("load file error: %v", err)
+		}
+	}
 }
