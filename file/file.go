@@ -79,6 +79,16 @@ func (f *File) Load(path string) error {
 	return nil
 }
 
+// from file info to set file
+func (f *File) LoadInfo(info setting.FileInfo) {
+	f.NumFileParts = info.NumFileParts
+	f.Key = info.Key
+	f.FileParts = make([]*FilePart, f.NumFileParts)
+	for i := 0; i < f.NumFileParts; i++ {
+
+	}
+}
+
 func (f *File) Encrypt(key []byte) error {
 	// set the key
 	f.Key = key
@@ -122,6 +132,7 @@ func (f *File) Decrypt(key []byte) error {
 
 func (f *File) SaveInfo() error {
 	info := setting.FileInfo{
+		Name:         f.Name,
 		Key:          f.Key,
 		NumFileParts: f.NumFileParts,
 		FileParts:    make([]string, f.NumFileParts),

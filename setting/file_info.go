@@ -6,13 +6,15 @@ import (
 )
 
 type FileInfo struct {
+	Name         string
 	Key          []byte
 	NumFileParts int
 	FileParts    []string
 }
 
-func NewFileInfo(key []byte, numFileParts int, fileParts []string) *FileInfo {
+func NewFileInfo(name string, key []byte, numFileParts int, fileParts []string) *FileInfo {
 	return &FileInfo{
+		Name:         name,
 		Key:          key,
 		NumFileParts: numFileParts,
 		FileParts:    fileParts,
