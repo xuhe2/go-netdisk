@@ -176,7 +176,7 @@ func (f *File) SaveInfo() error {
 	return nil
 }
 
-func (f *File) Save() error {
+func (f *File) SaveAsFileParts() error {
 	wg := sync.WaitGroup{}
 	ok := true
 	for i := 0; i < f.NumFileParts; i++ {
