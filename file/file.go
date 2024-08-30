@@ -75,18 +75,41 @@ func (f *File) Load(path string) error {
 	if _, err := filePartsInfo.ReadFrom(infoFile); err != nil {
 		return err
 	}
-	log.Printf("file info: %+v", filePartsInfo)
+	// load file from file parts
+	f.LoadInfo(filePartsInfo)
+	// decrypt file
+	if err := f.Decrypt(f.Key); err != nil {
+		return err
+	}
+	log.Printf(string(f.FileParts[0].Data))
 	return nil
 }
 
 // from file info to set file
-func (f *File) LoadInfo(info setting.FileInfo) {
+func (f *File) LoadInfo(info setting.FileInfo) error {
+	var err error = nil
+
+	f.Name = info.Name
 	f.NumFileParts = info.NumFileParts
 	f.Key = info.Key
 	f.FileParts = make([]*FilePart, f.NumFileParts)
+	wg := sync.WaitGroup{}
 	for i := 0; i < f.NumFileParts; i++ {
-
+		f.FileParts[i] = NewFilePart(info.FileParts[i], nil)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			var file *os.File
+			file, err = os.Open(f.FileParts[i].Name)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			f.FileParts[i].LoadData(file)
+		}()
 	}
+	wg.Wait()
+	return err
 }
 
 func (f *File) Encrypt(key []byte) error {
