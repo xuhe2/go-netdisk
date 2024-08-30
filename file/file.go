@@ -1,6 +1,7 @@
 package file
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
@@ -176,6 +177,7 @@ func (f *File) SaveInfo() error {
 	return nil
 }
 
+// 保存文件为文件分块
 func (f *File) SaveAsFileParts() error {
 	wg := sync.WaitGroup{}
 	ok := true
@@ -196,6 +198,25 @@ func (f *File) SaveAsFileParts() error {
 	// this file will be used when decrypting the file
 	if err := f.SaveInfo(); err != nil {
 		return err
+	}
+	return nil
+}
+
+// save the whole file
+func (f *File) Save() error {
+	file, err := os.Create(f.Name)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	w := bufio.NewWriter(file)
+	defer w.Flush()
+
+	for i := 0; i < f.NumFileParts; i++ {
+		if _, err := w.Write(f.FileParts[i].Data); err != nil {
+			return err
+		}
 	}
 	return nil
 }

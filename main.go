@@ -76,6 +76,7 @@ func pull() {
 
 	dataFile := file.File{}
 
+	// load the file
 	// 如果是URL
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
 	} else {
@@ -83,5 +84,10 @@ func pull() {
 		if err := dataFile.Load(path); err != nil {
 			log.Fatalf("load file error: %v", err)
 		}
+	}
+
+	// save the file
+	if err := dataFile.Save(); err != nil {
+		log.Fatalf("save file error: %v", err)
 	}
 }
