@@ -61,8 +61,8 @@ func push() {
 	if err := dataFile.Encrypt([]byte(programSetting.Key)); err != nil {
 		log.Fatalf("encrypt file error: %v", err)
 	}
-	if err := dataFile.Save(); err != nil {
-		log.Fatalf("save file error: %v", err)
+	if err := dataFile.SaveAsFileParts(); err != nil {
+		log.Fatalf("save file parts error: %v", err)
 	}
 }
 
