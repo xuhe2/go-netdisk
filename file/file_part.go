@@ -22,6 +22,25 @@ func NewFilePart(name string, data []byte) *FilePart {
 	}
 }
 
+func (fp *FilePart) LoadData(r io.Reader) error {
+	// read the reader and put all content into the file parts data
+	// the file parts data may be nil
+	n := FilePartSize
+	// if r is a file, get the file size
+	if f, ok := r.(*os.File); ok {
+		fi, err := f.Stat()
+		if err != nil {
+			return err
+		}
+		n = int(fi.Size())
+	}
+	if fp.Data == nil {
+		fp.Data = make([]byte, n)
+	}
+	_, err := io.ReadFull(r, fp.Data)
+	return err
+}
+
 func (fp *FilePart) Encrypt(key []byte) error {
 	// use AES to encrypt the file data
 	block, err := aes.NewCipher(key)
