@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const FilePartSize = 50 * 1024 * 1024 // 50MB
+const FilePartSize = 49 * 1024 * 1024 // 50MB
 
 type FilePart struct {
 	Name string `json:"file_name"`
