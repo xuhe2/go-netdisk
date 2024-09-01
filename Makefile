@@ -20,6 +20,7 @@ clean-bin:
 clean-data:
 	rm -f data/*.part
 	rm -f data/*.info
+	rm -r ./repo
 
 # clean up the build artifacts and data
 clean: clean-bin clean-data
