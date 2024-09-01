@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/xuhe2/go-netdisk/file"
+	"github.com/xuhe2/go-netdisk/network"
 	"github.com/xuhe2/go-netdisk/setting"
 )
 
@@ -35,6 +36,8 @@ func main() {
 		push()
 	case "pull":
 		pull()
+	case "get":
+		get()
 	default:
 		log.Fatalf("operation %s not support", operation)
 	}
@@ -89,5 +92,27 @@ func pull() {
 	// save the file
 	if err := dataFile.Save(); err != nil {
 		log.Fatalf("save file error: %v", err)
+	}
+}
+
+func get() {
+	// get data file name
+	if len(os.Args) <= 1 {
+		log.Fatalf("please input data file name")
+	}
+	url := os.Args[len(os.Args)-1]
+	log.Printf("url: %s", url)
+
+	var networkService network.NetworkService
+
+	if strings.HasSuffix(url, ".git") {
+		networkService = network.NewRepo(network.RepoConfig{
+			Url:  url,
+			Path: "./repo",
+		})
+	}
+
+	if err := networkService.Download(); err != nil {
+		log.Fatalf("download file error: %v", err)
 	}
 }
