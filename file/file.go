@@ -77,12 +77,17 @@ func (f *File) Load(path string) error {
 		return err
 	}
 	// load file from file parts
-	f.LoadInfo(filePartsInfo)
+	if err := f.LoadInfo(filePartsInfo); err != nil {
+		return err
+	}
+	// load file parts
+	if err := f.LoadParts(filePartsInfo); err != nil {
+		return err
+	}
 	// decrypt file
 	if err := f.Decrypt(f.Key); err != nil {
 		return err
 	}
-	log.Printf(string(f.FileParts[0].Data))
 	return nil
 }
 
@@ -94,6 +99,14 @@ func (f *File) LoadInfo(info setting.FileInfo) error {
 	f.NumFileParts = info.NumFileParts
 	f.Key = info.Key
 	f.FileParts = make([]*FilePart, f.NumFileParts)
+
+	return err
+}
+
+// load the file parts
+func (f *File) LoadParts(info setting.FileInfo) error {
+	var err error = nil
+
 	wg := sync.WaitGroup{}
 	for i := 0; i < f.NumFileParts; i++ {
 		f.FileParts[i] = NewFilePart(info.FileParts[i], nil)
@@ -110,6 +123,7 @@ func (f *File) LoadInfo(info setting.FileInfo) error {
 		}()
 	}
 	wg.Wait()
+
 	return err
 }
 
