@@ -24,6 +24,7 @@ func (r *Repo) Download() error {
 	_, err := git.PlainClone(r.Path, false, &git.CloneOptions{
 		URL:      r.Url,
 		Progress: os.Stdout,
+		Depth:    1,
 	})
 	if err != nil {
 		return err
